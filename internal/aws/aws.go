@@ -13,3 +13,12 @@ func CreateAwsSecret(name string, secretString string) error {
 	}
 	return nil
 }
+
+// IsAwsCliInstalled verifica se a AWS CLI está instalada no sistema
+func IsAwsCliInstalled() bool {
+	cmd := exec.Command("aws", "--version")
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+	return true
+}
