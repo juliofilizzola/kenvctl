@@ -57,7 +57,71 @@ func CreateEnv() (bool, error) {
 		output.PrintError(err)
 		return false, err
 	}
-	// todo: criar env no kubernates e na aws
 
-	return false, nil
+	err = kube.CreateSecretFromLiterals(items.Namespace, items.Name, map[string]string{env: value})
+	if err != nil {
+		output.PrintError(err)
+		return false, err
+	}
+
+	return true, nil
+}
+
+func AddNewEnv() (bool, error) {
+	output.PrintInfo("Adicionando nova env")
+
+	tables, err := kube.GetAllSecretsTable()
+	if err != nil {
+		return false, err
+	}
+	lines := utils.ParseTableLines(tables)
+	index := output.PrintChoices(lines)
+
+	items := utils.ParseTableLine(lines[index])
+
+	output.PrintInfo("Secret selecionado: " + items.Name)
+
+	output.PrintInfo("informe a nova env para o secret selecionado")
+
+	env := output.AskValue("env")
+	if env == "" {
+		output.PrintInfo("env não foi informada")
+		env = output.AskValue("env")
+		if env == "" {
+			output.PrintError(utils.NewError("Env não informada"))
+			return false, nil
+		}
+	}
+
+	output.PrintInfo("env informada")
+
+	output.PrintInfo("informe o valor da nova env para o secret selecionado")
+	value := output.AskValue("valor")
+
+	if value == "" {
+		output.PrintInfo("valor não foi informada")
+		value = output.AskValue("valor")
+
+		if value == "" {
+			output.PrintError(utils.NewError("Valor não informada"))
+			return false, nil
+		}
+	}
+
+	secret := utils.BuildJSONKeyValue(env, value)
+
+	err = aws.UpdateAwsSecret(items.Name, secret)
+
+	if err != nil {
+		output.PrintError(err)
+		return false, err
+	}
+
+	err = kube.UpdateSecretFromLiterals(items.Namespace, items.Name, map[string]string{env: value})
+	if err != nil {
+		output.PrintError(err)
+		return false, err
+	}
+
+	return true, nil
 }
