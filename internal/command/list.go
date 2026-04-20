@@ -3,8 +3,8 @@ package command
 import "github.com/spf13/cobra"
 
 var AddCmd = &cobra.Command{
-	Use:   "add",
-	Short: "Add a new environment variable",
+	Use:   "create-add",
+	Short: "Add and create new environment variable",
 	RunE:  Add,
 }
 
@@ -24,4 +24,10 @@ var SetCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Set an environment variable",
 	RunE:  Set,
+}
+
+var NewEnvCmd = &cobra.Command{
+	Use:   "new-env",
+	Short: "Create a new environment",
+	RunE:  AddNewEnv,
 }
