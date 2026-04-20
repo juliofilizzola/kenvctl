@@ -15,11 +15,10 @@ func Add(cmd *cobra.Command, args []string) (err error) {
 
 func List(cmd *cobra.Command, args []string) (err error) {
 	fmt.Println("list called")
-	env, err := service.CreateEnv()
+	_, err = service.CreateEnv()
 	if err != nil {
 		return err
 	}
-	fmt.Println(env)
 	return nil
 }
 
@@ -31,4 +30,9 @@ func Remove(cmd *cobra.Command, args []string) (err error) {
 func Set(cmd *cobra.Command, args []string) (err error) {
 	fmt.Println("set called")
 	return nil
+}
+
+func AddNewEnv(cmd *cobra.Command, args []string) (err error) {
+	_, err = service.AddNewEnv()
+	return err
 }
