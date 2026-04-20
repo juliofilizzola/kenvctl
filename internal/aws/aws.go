@@ -14,6 +14,16 @@ func CreateAwsSecret(name string, secretString string) error {
 	return nil
 }
 
+// UpdateAwsSecret atualiza o valor de um secret existente na AWS
+func UpdateAwsSecret(secretId string, secretString string) error {
+	cmd := exec.Command("aws", "secretsmanager", "update-secret", "--secret-id", secretId, "--secret-string", secretString)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("erro ao atualizar secret na AWS: %v\n%s", err, string(out))
+	}
+	return nil
+}
+
 // IsAwsCliInstalled verifica se a AWS CLI está instalada no sistema
 func IsAwsCliInstalled() bool {
 	cmd := exec.Command("aws", "--version")
