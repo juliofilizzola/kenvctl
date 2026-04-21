@@ -63,7 +63,7 @@ jobs:
       - name: Install WiX
         shell: pwsh
         run: |
-          dotnet tool install --global wix --version 7.*
+          dotnet tool install --global wix --version 7.0.0
           echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Append
 
       - name: Build MSI
@@ -71,10 +71,10 @@ jobs:
         run: |
           $version = "${{ github.ref_name }}".TrimStart("v")
           wix build .github\wix\Product.wxs `
+            -acceptEula wix7 `
             -define SourceDir=dist\windows-amd64 `
             -define Version=$version `
             -define ProductName=${{ env.APP_NAME }} `
-            -define WixAcceptEula=yes `
             -o dist\${{ env.APP_NAME }}_${{ github.ref_name }}_windows_amd64.msi
 
       - name: Upload Windows artifacts
