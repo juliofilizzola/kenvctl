@@ -1,0 +1,131 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: kenvctl
+  MAIN_PACKAGE: ./cmd
+  GO_VERSION: "1.25"
+  MACOS_IDENTIFIER: com.juliofilizzola.kenvctl
+  AUTHOR_OR_COMPANY: Julio Filizzola
+
+jobs:
+  linux:
+    name: Linux packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run GoReleaser (Linux only)
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean --split --config .goreleaser.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  windows:
+    name: Windows exe + msi
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build exe
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist\windows-amd64 | Out-Null
+          $env:CGO_ENABLED="0"
+          $env:GOOS="windows"
+          $env:GOARCH="amd64"
+          go build -trimpath -ldflags "-s -w -X main.version=${{ github.ref_name }}" -o dist\windows-amd64\${{ env.APP_NAME }}.exe ${{ env.MAIN_PACKAGE }}
+
+      - name: Install WiX
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix
+          echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Build MSI
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          wix build .github\wix\Product.wxs `
+            -define SourceDir=dist\windows-amd64 `
+            -define Version=$version `
+            -define ProductName=${{ env.APP_NAME }} `
+            -o dist\${{ env.APP_NAME }}_${{ github.ref_name }}_windows_amd64.msi
+
+      - name: Upload Windows artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/windows-amd64/${{ env.APP_NAME }}.exe
+            dist/${{ env.APP_NAME }}_${{ github.ref_name }}_windows_amd64.msi
+
+  macos:
+    name: macOS bin + pkg
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build binary
+        run: |
+          mkdir -p dist/macos-amd64/usr/local/bin
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 \
+            go build -trimpath -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" \
+            -o dist/macos-amd64/usr/local/bin/${APP_NAME} ${MAIN_PACKAGE}
+
+      - name: Build component pkg
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          pkgbuild \
+          --root dist/macos-amd64 \
+          --identifier "${MACOS_IDENTIFIER}" \
+          --version "${VERSION}" \
+          --install-location / \
+          dist/${APP_NAME}_${GITHUB_REF_NAME}_darwin_amd64.pkg
+
+      - name: Build product pkg
+        run: |
+          productbuild \
+            --package dist/${APP_NAME}_${GITHUB_REF_NAME}_darwin_amd64.pkg \
+            dist/${APP_NAME}_${GITHUB_REF_NAME}_macos_installer.pkg
+
+      - name: Create tar.gz
+        run: |
+          mkdir -p artifacts
+          tar -C dist/macos-amd64/usr/local/bin -czf artifacts/${APP_NAME}_${GITHUB_REF_NAME}_darwin_amd64.tar.gz ${APP_NAME}
+
+      - name: Upload macOS artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/${{ env.APP_NAME }}_${{ github.ref_name }}_darwin_amd64.tar.gz
+            dist/${{ env.APP_NAME }}_${{ github.ref_name }}_macos_installer.pkg

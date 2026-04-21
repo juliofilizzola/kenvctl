@@ -1,0 +1,58 @@
+version: 2
+
+project_name: kenvctl
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: linux
+    main: ./cmd
+    binary: kenvctl
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - id: linux-archives
+    ids:
+      - linux
+    formats:
+      - tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_linux_{{ .Arch }}
+
+nfpms:
+  - id: packages
+    ids:
+      - linux
+    package_name: kenvctl
+    file_name_template: "{{ .ConventionalFileName }}"
+    homepage: https://github.com/juliofilizzola/kenvctl
+    maintainer: Julio Filizzola <juliofilizzola@users.noreply.github.com>
+    description: CLI para operações com ambientes Kubernetes e AWS.
+    license: MIT
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/bin
+    contents:
+      - src: ./README.md
+        dst: /usr/share/doc/kenvctl/README.md
+      - src: ./LICENSE
+        dst: /usr/share/doc/kenvctl/LICENSE
+    scripts:
+      postinstall: .github/packaging/linux/postinstall.sh
+      preremove: .github/packaging/linux/preremove.sh
+
+release:
+  github:
+    owner: juliofilizzola
+    name: kenvctl
