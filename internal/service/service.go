@@ -125,3 +125,75 @@ func AddNewEnv() (bool, error) {
 
 	return true, nil
 }
+
+// CreateEnvFromFile lê um arquivo de envs e cria a secret no AWS e no Kubernetes
+func CreateEnvFromFile(filePath string) (bool, error) {
+	output.PrintInfo("Buscando secrets")
+	table, err := kube.GetAllSecretsTable()
+	if err != nil {
+		return false, err
+	}
+	lines := utils.ParseTableLines(table)
+	index := output.PrintChoices(lines)
+	if index == -1 {
+		return false, nil
+	}
+	items := utils.ParseTableLine(lines[index])
+	output.PrintInfo("Secret selecionado: " + items.Name)
+
+	output.PrintInfo("Lendo envs do arquivo: " + filePath)
+	data, err := utils.ReadEnvFile(filePath)
+	if err != nil {
+		output.PrintError(err)
+		return false, err
+	}
+	secret := utils.BuildJSONFromMap(data)
+
+	err = aws.CreateAwsSecret(items.Name, secret)
+	if err != nil {
+		output.PrintError(err)
+		return false, err
+	}
+	err = kube.CreateSecretFromLiterals(items.Namespace, items.Name, data)
+	if err != nil {
+		output.PrintError(err)
+		return false, err
+	}
+	return true, nil
+}
+
+// UpdateEnvFromFile lê um arquivo de envs e atualiza a secret no AWS e no Kubernetes
+func UpdateEnvFromFile(filePath string) (bool, error) {
+	output.PrintInfo("Buscando secrets")
+	table, err := kube.GetAllSecretsTable()
+	if err != nil {
+		return false, err
+	}
+	lines := utils.ParseTableLines(table)
+	index := output.PrintChoices(lines)
+	if index == -1 {
+		return false, nil
+	}
+	items := utils.ParseTableLine(lines[index])
+	output.PrintInfo("Secret selecionado: " + items.Name)
+
+	output.PrintInfo("Lendo envs do arquivo: " + filePath)
+	data, err := utils.ReadEnvFile(filePath)
+	if err != nil {
+		output.PrintError(err)
+		return false, err
+	}
+	secret := utils.BuildJSONFromMap(data)
+
+	err = aws.UpdateAwsSecret(items.Name, secret)
+	if err != nil {
+		output.PrintError(err)
+		return false, err
+	}
+	err = kube.UpdateSecretFromLiterals(items.Namespace, items.Name, data)
+	if err != nil {
+		output.PrintError(err)
+		return false, err
+	}
+	return true, nil
+}
