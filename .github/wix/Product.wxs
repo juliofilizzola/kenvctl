@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <Package
+Name="$(var.ProductName)"
+Manufacturer="Julio Filizzola"
+Version="$(var.Version)"
+UpgradeCode="B0D7A0B1-5F8D-4D8A-8F2A-7A3E2B0D4E11">
+
+    <MediaTemplate />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+    <Directory Id="INSTALLFOLDER" Name="kenvctl">
+    <Component Id="MainExecutable" Guid="B6E36E57-5E54-4D3B-AF2B-C83135A83A11">
+    <File Id="CliExe" Source="$(var.SourceDir)\kenvctl.exe" KeyPath="yes" />
+    <Environment
+Id="EnvPath"
+Name="PATH"
+Action="set"
+Part="last"
+System="yes"
+Permanent="no"
+Value="[INSTALLFOLDER]" />
+    </Component>
+    </Directory>
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="kenvctl" Level="1">
+    <ComponentRef Id="MainExecutable" />
+    </Feature>
+    </Package>
+    </Wix>
