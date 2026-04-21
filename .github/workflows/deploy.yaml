@@ -74,6 +74,7 @@ jobs:
             -define SourceDir=dist\windows-amd64 `
             -define Version=$version `
             -define ProductName=${{ env.APP_NAME }} `
+            -define WixAcceptEula=yes `
             -o dist\${{ env.APP_NAME }}_${{ github.ref_name }}_windows_amd64.msi
 
       - name: Upload Windows artifacts
