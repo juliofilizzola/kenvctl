@@ -36,7 +36,7 @@ kenvctl add
 ```
 
 ## Requisitos
-- Go 1.18+
+- Go 1.25+
 - kubectl instalado e configurado
 - AWS CLI instalado e configurado (para AWS Secrets Manager)
 
