@@ -36,3 +36,13 @@ func AddNewEnv(cmd *cobra.Command, args []string) (err error) {
 	_, err = service.AddNewEnv()
 	return err
 }
+
+func IsValidAWSCLI(cmd *cobra.Command, args []string) (err error) {
+	_, err = service.ValidAwsCLI()
+	return err
+}
+
+func IsValidKubeCLI(cmd *cobra.Command, args []string) (err error) {
+	_, err = service.ValidKubeCLI()
+	return err
+}
