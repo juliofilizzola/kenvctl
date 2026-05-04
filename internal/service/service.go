@@ -1,6 +1,10 @@
 package service
 
 import (
+	"fmt"
+	"os/exec"
+	"strings"
+
 	"github.com/juliofilizzola/kenvctl/internal/aws"
 	"github.com/juliofilizzola/kenvctl/internal/kube"
 	"github.com/juliofilizzola/kenvctl/internal/output"
@@ -51,17 +55,23 @@ func CreateEnv() (bool, error) {
 	}
 
 	secret := utils.BuildJSONKeyValue(env, value)
-
-	err = aws.CreateAwsSecret(items.Name, secret)
-	if err != nil {
-		output.PrintError(err)
-		return false, err
-	}
+	output.PrintInfo(secret)
 
 	err = kube.CreateSecretFromLiterals(items.Namespace, items.Name, map[string]string{env: value})
 	if err != nil {
 		output.PrintError(err)
 		return false, err
+	}
+
+	output.PrintInfo("Quer adicionar essa env na aws secret?")
+	value = output.AskValue("s/n")
+
+	if strings.ToLower(value) == "s" {
+		err = aws.CreateAwsSecret(items.Name, secret)
+		if err != nil {
+			output.PrintError(err)
+			return false, err
+		}
 	}
 
 	return true, nil
@@ -196,4 +206,34 @@ func UpdateEnvFromFile(filePath string) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func ValidAwsCLI() (bool, error) {
+	valid, err := aws.IsAwsCliInstalled()
+
+	output.PrintInfo("AWS CLI versão: " + valid)
+
+	return true, err
+}
+
+func ValidKubeCLI() (bool, error) {
+	cmd := exec.Command("kubectl", "version", "--client")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, fmt.Errorf("erro ao executar kubectl version --client: %w", err)
+	}
+
+	versionInfo := strings.TrimSpace(string(out))
+
+	lines := strings.Split(versionInfo, "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "Client Version:") {
+			parts := strings.Split(line, "Client Version:")
+			if len(parts) > 1 {
+				output.PrintInfo("kubectl version is: " + strings.TrimSpace(parts[1]))
+				return true, nil
+			}
+		}
+	}
+	return true, err
 }
