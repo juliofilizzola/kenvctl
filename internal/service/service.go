@@ -57,17 +57,22 @@ func CreateEnv() (bool, error) {
 	secret := utils.BuildJSONKeyValue(env, value)
 	output.PrintInfo(secret)
 
-	//err = aws.CreateAwsSecret(items.Name, secret)
-	//if err != nil {
-	//	output.PrintError(err)
-	//	return false, err
-	//}
-	//
-	//err = kube.CreateSecretFromLiterals(items.Namespace, items.Name, map[string]string{env: value})
-	//if err != nil {
-	//	output.PrintError(err)
-	//	return false, err
-	//}
+	err = kube.CreateSecretFromLiterals(items.Namespace, items.Name, map[string]string{env: value})
+	if err != nil {
+		output.PrintError(err)
+		return false, err
+	}
+
+	output.PrintInfo("Quer adicionar essa env na aws secret?")
+	value = output.AskValue("s/n")
+
+	if strings.ToLower(value) == "s" {
+		err = aws.CreateAwsSecret(items.Name, secret)
+		if err != nil {
+			output.PrintError(err)
+			return false, err
+		}
+	}
 
 	return true, nil
 }
