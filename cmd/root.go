@@ -36,5 +36,7 @@ func init() {
 	rootCmd.AddCommand(command.RemoveCmd)
 	rootCmd.AddCommand(command.SetCmd)
 	rootCmd.AddCommand(command.NewEnvCmd)
+	rootCmd.AddCommand(command.IsValidAWS)
+	rootCmd.AddCommand(command.IsValidKube)
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
