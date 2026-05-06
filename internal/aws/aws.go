@@ -3,6 +3,7 @@ package aws
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 func CreateAwsSecret(name string, secretString string) error {
@@ -25,10 +26,16 @@ func UpdateAwsSecret(secretId string, secretString string) error {
 }
 
 // IsAwsCliInstalled verifica se a AWS CLI está instalada no sistema
-func IsAwsCliInstalled() bool {
+func IsAwsCliInstalled() (string, error) {
 	cmd := exec.Command("aws", "--version")
-	if err := cmd.Run(); err != nil {
-		return false
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("erro ao executar aws --version: %w", err)
 	}
-	return true
+
+	versionInfo := strings.TrimSpace(string(out))
+	versionInfo = strings.TrimPrefix(versionInfo, "aws-cli/")
+	version := strings.Fields(versionInfo)[0]
+
+	return version, nil
 }

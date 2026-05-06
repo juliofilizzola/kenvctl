@@ -1,6 +1,8 @@
 package command
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+)
 
 var AddCmd = &cobra.Command{
 	Use:   "create-add",
@@ -30,4 +32,16 @@ var NewEnvCmd = &cobra.Command{
 	Use:   "new-env",
 	Short: "Create a new environment",
 	RunE:  AddNewEnv,
+}
+
+var IsValidAWS = &cobra.Command{
+	Use:   "is-valid-awscli",
+	Short: "Check if aws cli is valid",
+	RunE:  IsValidAWSCLI,
+}
+
+var IsValidKube = &cobra.Command{
+	Use:   "is-valid-kubecli",
+	Short: "Check if kube cli is valid",
+	RunE:  IsValidKubeCLI,
 }

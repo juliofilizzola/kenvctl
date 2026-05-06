@@ -86,18 +86,9 @@ func GetAllSecretsTable() (string, error) {
 	return string(out), nil
 }
 
-// IsKubectlInstalled verifica se o kubectl está instalado no sistema
-func IsKubectlInstalled() bool {
-	cmd := exec.Command("kubectl", "version", "--client")
-	if err := cmd.Run(); err != nil {
-		return false
-	}
-	return true
-}
-
 // GetKubectlVersion retorna a versão do kubectl instalada
 func GetKubectlVersion() (string, error) {
-	cmd := exec.Command("kubectl", "version", "--client", "--short")
+	cmd := exec.Command("kubectl", "version", "--client")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("erro ao obter versão do kubectl: %v\n%s", err, string(out))
